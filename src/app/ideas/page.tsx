@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Banner from "@/components/Banner";
@@ -7,9 +8,10 @@ import PostCard from "@/components/PostCard";
 type Post = {
   id: string;
   title: string;
+  slug: string;
   published_at: string;
-  medium_image?: { url: string } | null;
-  small_image?: { url: string } | null;
+  medium_image?: { url: string }[] | null;
+  small_image?: { url: string }[] | null;
 };
 
 export default function IdeasPage() {
@@ -53,8 +55,8 @@ export default function IdeasPage() {
     <>
       <Header />
       <Banner />
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-18">
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-5">
           <span>
             {total != null
               ? `Showing ${(page - 1) * perPage + 1} - ${Math.min(
@@ -63,7 +65,7 @@ export default function IdeasPage() {
                 )} of ${total}`
               : `Showing ${posts.length} items`}
           </span>
-          <div className="flex gap-4 items-center">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full sm:w-auto">
           <div className="flex items-center gap-1">
   <span className="text-base font-semibold text-black-800">
     Show per page:
@@ -136,11 +138,13 @@ export default function IdeasPage() {
 
         {loading && <p>Loading...</p>}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {posts.map((p) => (
-            <PostCard key={p.id} post={p} />
-          ))}
-        </div>
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-9 gap-y-8 md:gap-y-15">
+    {posts.map((p) => (
+      <PostCard key={p.id} post={p} />
+    ))}
+  </div>
+</div>
 
         {/* Pagination */}
         <div className="flex gap-1 mt-6 justify-center flex-wrap">
@@ -159,32 +163,27 @@ export default function IdeasPage() {
             ‹
           </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1)
-  .filter((n) => {
-    // Tampilkan hanya halaman:
-    // 1-5, current-1, current, current+1, terakhir
-    if (n <= 5) return true;
-    if (n === totalPages) return true;
-    if (Math.abs(n - page) <= 1) return true;
-    return false;
-  })
-  .map((n, i, arr) => (
-    <>
-      {i > 0 && n - arr[i - 1] > 1 && (
-        <span className="px-1">…</span>
-      )}
-      <button
-        key={n}
-        onClick={() => setPage(n)}
-        className={`w-8 h-8 flex items-center justify-center rounded ${
-          n === page
-            ? "bg-orange-500 text-white font-semibold"
-            : "hover:bg-black-100"
-        }`}
-      >
-        {n}
-      </button>
-    </>
-  ))}
+  .map((n, i, arr) => {
+    const shouldShow =
+      n === 1 ||
+      n === totalPages ||
+      Math.abs(n - page) <= 2; // Current ±2
+      return shouldShow ? (
+        <React.Fragment key={n}>
+          {i > 0 && arr[i - 1] !== n - 1 && <span key={`ellipsis-${n}`}>…</span>}
+          <button
+            onClick={() => setPage(n)}
+            className={`w-8 h-8 flex items-center justify-center rounded ${
+              n === page
+                ? "bg-orange-500 text-white font-semibold"
+                : "hover:bg-black-100"
+            }`}
+          >
+            {n}
+          </button>
+        </React.Fragment>
+      ) : null;
+  })}
           <button
             onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
             disabled={page === totalPages}
